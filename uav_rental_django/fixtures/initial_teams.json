@@ -1,0 +1,7 @@
+[
+    {"model": "api.team", "pk": 1, "fields": {"name": "kanat_takim"}},
+    {"model": "api.team", "pk": 2, "fields": {"name": "govde_takim"}},
+    {"model": "api.team", "pk": 3, "fields": {"name": "kuyruk_takim"}},
+    {"model": "api.team", "pk": 4, "fields": {"name": "aviyonik_takim"}},
+    {"model": "api.team", "pk": 5, "fields": {"name": "montaj_takim"}}
+]
