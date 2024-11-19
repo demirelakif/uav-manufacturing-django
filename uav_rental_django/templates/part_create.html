@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-lg mx-auto my-32 p-10 bg-white shadow-lg rounded-xl" >
+    <h1 class="text-2xl font-semibold text-center text-gray-800 mb-4">Produce Part</h1>
+
+    <!-- Success/Error Messages -->
+    {% if messages %}
+        <div class="space-y-4">
+            {% for message in messages %}
+                <div class="text-sm {% if message.tags == 'success' %}bg-green-100 text-green-700{% elif message.tags == 'error' %}bg-red-100 text-red-700{% endif %} p-3 rounded-lg">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Part Creation Form -->
+    <form action="{% url 'part_create' %}" method="POST" class="space-y-4">
+        {% csrf_token %}
+        
+        <!-- Part Type Selection -->
+        <div class="mb-4">
+            <label for="part_type" class="block text-sm font-medium text-gray-600">Part Type</label>
+            <select name="part_type" id="part_type" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                <option value="kanat">Kanat</option>
+                <option value="govde">Gövde</option>
+                <option value="kuyruk">Kuyruk</option>
+                <option value="aviyonik">Aviyonik</option>
+            </select>
+        </div>
+
+        <!-- Aircraft Type Selection (part_aircraft) -->
+        <div class="mb-4">
+            <label for="part_aircraft" class="block text-sm font-medium text-gray-600">UAV Type</label>
+            <select name="part_aircraft" id="part_aircraft" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                <option value="tb2">TB2</option>
+                <option value="tb3">TB3</option>
+                <option value="akinci">AKINCI</option>
+                <option value="kizilelma">KIZILELMA</option>
+            </select>
+        </div>
+
+        <!-- Stock Quantity -->
+        <div class="mb-4">
+            <label for="stock" class="block text-sm font-medium text-gray-600">Stock Amount</label>
+            <input type="number" name="stock" id="stock" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
+        </div>
+
+        <div class="flex justify-center">
+            <button type="submit" class="w-full sm:w-auto px-6 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                Produce
+            </button>
+        </div>
+    </form>
+
+    <!-- Return to Dashboard Button -->
+    <div class="mt-6 text-center">
+        <a href="{% url 'dashboard' %}" class="inline-block px-6 py-2 bg-gray-500 text-white font-semibold rounded-lg shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">
+            Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

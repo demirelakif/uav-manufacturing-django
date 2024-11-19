@@ -16,7 +16,8 @@ from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from .models import Team, Part, Aircraft
 from .serializers import TeamSerializer, PartSerializer, AircraftSerializer
-from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
+from django.core.paginator import Paginator
 
 
 class StaffApi(APIView): 
@@ -61,11 +62,6 @@ class RegisterView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     
-
-
-
-
-
 
 # Takım bilgilerini listelemek için
 class TeamViewSet(viewsets.ReadOnlyModelViewSet):
@@ -115,7 +111,7 @@ class PartViewSet(viewsets.ModelViewSet):
         existing_part = Part.objects.filter(part_type=part_type, part_aircraft=mutable_data['part_aircraft']).first()
         if existing_part:
             # Stok sayısını artır
-            existing_part.stock += mutable_data['stock']
+            existing_part.stock += int(mutable_data['stock'])
             existing_part.save()
 
             # Güncellenen parçayı döndür
@@ -125,7 +121,7 @@ class PartViewSet(viewsets.ModelViewSet):
                 "part_type": existing_part.part_type,
                 "part_aircraft": existing_part.part_aircraft,
                 "new_stock": existing_part.stock
-            }, status=200)
+            }, status=201)
 
         return super().create(request, *args, **kwargs)
     
@@ -149,7 +145,13 @@ class AircraftViewSet(viewsets.ModelViewSet):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
-    
+    def get_queryset(self):
+        # Kullanıcının takımına göre parçaları filtrele
+        user_team = self.request.user.team
+        if(user_team.id == 5):
+            return Aircraft.objects.filter()
+        else:
+            return Response({"error": "Sadece montaj takımı listeleyebilir!"}, status=400)
 
 
     def create(self, request, *args, **kwargs):
@@ -157,7 +159,13 @@ class AircraftViewSet(viewsets.ModelViewSet):
             return Response({"error": "Bu takım bu tür bir uçak üretme yetkisi bulunmuyor!"}, status=400)
         # Uçağın üretiminde gerekli parçalar
         aircraft_type = request.data.get('aircraft_type')
-        team = request.user.team
+        team_id = request.user.team.id
+
+        mutable_data = request.data.copy()  # `request.data` immutable olduğundan kopyalıyoruz
+        mutable_data['team'] = team_id
+
+        # Yeni `request` objesi oluştur ve `data`yı güncelle
+        request._full_data = mutable_data
 
         required_parts = {
             'kanat', 'govde', 'kuyruk', 'aviyonik'
@@ -166,7 +174,6 @@ class AircraftViewSet(viewsets.ModelViewSet):
         missing_parts = []
         for part_type in required_parts:
             # Parçanın stokta olup olmadığını ve kullanılmamış olup olmadığını kontrol et
-            print(part_type)
             part = Part.objects.filter(part_type=part_type, stock__gt=0, part_aircraft=aircraft_type).first()
             if not part:
                 missing_parts.append(part_type)
@@ -183,3 +190,58 @@ class AircraftViewSet(viewsets.ModelViewSet):
         # Uçak oluşturma işlemini tamamla
         return super().create(request, *args, **kwargs)
 
+
+
+def part_list(request):
+    user_team = request.user.team
+    parts = Part.objects.filter(team=user_team.id)
+    # Verileri DataTable formatına uygun döndür
+    data = []
+    for part in parts:
+        data.append({
+            'part_type': part.part_type,
+            'part_aircraft': part.part_aircraft,
+            'stock': part.stock
+        })
+
+    return JsonResponse({
+        'draw': int(request.GET.get('draw', 1)),
+        'data': data
+    })
+
+
+def aircraft_list(request):
+    user_team = request.user.team
+    if(user_team.id !=5):
+        return Response({"error": "Sadece montaj takımı listeleyebilir!"}, status=400)
+    
+    aircrafts = Aircraft.objects.filter()
+    # Verileri DataTable formatına uygun döndür
+    data = []
+    for aircraft in aircrafts:
+        data.append({
+            'aircraft_type': aircraft.aircraft_type,
+            'production_date': aircraft.production_date
+
+        })
+
+    return JsonResponse({
+        'draw': int(request.GET.get('draw', 1)),
+        'data': data
+    })
+
+def staff_list(request):
+    user_team = request.user.team
+    staff = Staff.objects.filter(team=user_team)
+    print("e geldi bura")
+    print("team_iddddd",user_team.id)
+    data = []
+    for member in staff:
+        data.append({
+            'name': member.username,
+            'team': member.team.name,
+        })
+    
+    return JsonResponse({
+        'data': data
+    })
