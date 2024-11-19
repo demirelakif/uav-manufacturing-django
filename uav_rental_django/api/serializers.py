@@ -50,6 +50,12 @@ class PartSerializer(serializers.ModelSerializer):
 
 
 class AircraftSerializer(serializers.ModelSerializer):
+    used_parts = serializers.SerializerMethodField()
+
     class Meta:
         model = Aircraft
-        fields = ['id', 'aircraft_type', 'produced_by', 'production_date']
+        fields = ['id', 'aircraft_type', 'production_date', 'used_parts']
+
+    def get_used_parts(self, obj):
+        parts = Part.objects.filter(part_aircraft=obj.aircraft_type)
+        return PartSerializer(parts, many=True).data

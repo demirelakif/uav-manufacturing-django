@@ -91,7 +91,7 @@ class PartViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         # Kullanıcının takımını al
         team_id = request.user.team.id
-
+        
         # `request.data`'ya takım bilgisini ekle
         mutable_data = request.data.copy()  # `request.data` immutable olduğundan kopyalıyoruz
         mutable_data['team'] = team_id
@@ -111,6 +111,21 @@ class PartViewSet(viewsets.ModelViewSet):
 
         if allowed_parts.get(part_type) != request.user.team.name:
             return Response({"error": "Bu takım bu tür bir parça üretemez!"}, status=400)
+        
+        existing_part = Part.objects.filter(part_type=part_type, part_aircraft=mutable_data['part_aircraft']).first()
+        if existing_part:
+            # Stok sayısını artır
+            existing_part.stock += mutable_data['stock']
+            existing_part.save()
+
+            # Güncellenen parçayı döndür
+            return Response({
+                "message": "Stock increased for existing part.",
+                "part_id": existing_part.id,
+                "part_type": existing_part.part_type,
+                "part_aircraft": existing_part.part_aircraft,
+                "new_stock": existing_part.stock
+            }, status=200)
 
         return super().create(request, *args, **kwargs)
     
@@ -128,33 +143,43 @@ class PartViewSet(viewsets.ModelViewSet):
 
 
 
-# Uçak işlemleri için
 class AircraftViewSet(viewsets.ModelViewSet):
     queryset = Aircraft.objects.all()
     serializer_class = AircraftSerializer
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
+    
+
+
     def create(self, request, *args, **kwargs):
+        if(request.user.team.id != 5):
+            return Response({"error": "Bu takım bu tür bir uçak üretme yetkisi bulunmuyor!"}, status=400)
+        # Uçağın üretiminde gerekli parçalar
         aircraft_type = request.data.get('aircraft_type')
+        team = request.user.team
+
         required_parts = {
-            'tb2': ['kanat', 'govde', 'kuyruk', 'aviyonik'],
-            'tb3': ['kanat', 'govde', 'kuyruk', 'aviyonik'],
-            'akinci': ['kanat', 'govde', 'kuyruk', 'aviyonik'],
-            'kizilelma': ['kanat', 'govde', 'kuyruk', 'aviyonik'],
+            'kanat', 'govde', 'kuyruk', 'aviyonik'
         }
 
         missing_parts = []
-        for part in required_parts.get(aircraft_type, []):
-            if not Part.objects.filter(part_type=part, stock__gt=0).exists():
-                missing_parts.append(part)
+        for part_type in required_parts:
+            # Parçanın stokta olup olmadığını ve kullanılmamış olup olmadığını kontrol et
+            print(part_type)
+            part = Part.objects.filter(part_type=part_type, stock__gt=0, part_aircraft=aircraft_type).first()
+            if not part:
+                missing_parts.append(part_type)
 
         if missing_parts:
-            return Response({"error": f"Eksik parçalar: {', '.join(missing_parts)}"}, status=400)
+            return Response({"error": f"Eksik veya başka uçakta kullanılan parçalar: {', '.join(missing_parts)}"}, status=400)
 
-        for part_type in required_parts[aircraft_type]:
-            part = Part.objects.filter(part_type=part_type, stock__gt=0).first()
+        # Parçaları güncelle (stok düş ve hangi uçakta kullanıldığını kaydet)
+        for part_type in required_parts:
+            part = Part.objects.filter(part_type=part_type, stock__gt=0, part_aircraft=aircraft_type).first()
             part.stock -= 1
             part.save()
 
+        # Uçak oluşturma işlemini tamamla
         return super().create(request, *args, **kwargs)
+

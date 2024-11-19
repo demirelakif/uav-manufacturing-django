@@ -58,11 +58,6 @@ class Staff(AbstractBaseUser, PermissionsMixin):
         return self.username
 
 
-
-
-    
-
-
 class Part(models.Model):
     PART_TYPES = [
         ('kanat', 'Kanat'),
@@ -83,7 +78,7 @@ class Part(models.Model):
 
 class Aircraft(models.Model):
     aircraft_type = models.CharField(max_length=50, choices=AIRCRAFT_TYPES)
-    produced_by = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='aircrafts')
+    # produced_by = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='aircrafts')
     production_date = models.DateField(auto_now_add=True)
 
     def __str__(self):
