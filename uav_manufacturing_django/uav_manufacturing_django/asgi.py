@@ -1,5 +1,5 @@
 """
-ASGI config for uav_rental_django project.
+ASGI config for uav_manufacturing_django project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'uav_rental_django.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'uav_manufacturing_django.settings')
 
 application = get_asgi_application()

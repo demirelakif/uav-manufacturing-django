@@ -58,7 +58,7 @@ def logout_view(request):
 @login_required
 def aircraft_create_view(request):
     if request.method == 'POST':
-        token = Token.objects.get(user=request.user)
+        token = Token.objects.get_or_create(user=request.user)
         aircraft_type = request.POST.get('aircraft_type')
         # Sahte bir API isteği oluştur
         factory = APIRequestFactory()
@@ -103,8 +103,7 @@ def aircraft_create_view(request):
 @login_required
 def part_create_view(request):
     if request.method == 'POST':
-        print("Auth Token User:")
-        print(request.user)
+        token = Token.objects.get_or_create(user=request.user)
         part_type = request.POST.get('part_type')
         part_aircraft = request.POST.get('part_aircraft')  # Yeni eklenen uçak tipi
         stock = request.POST.get('stock')  # Yeni eklenen stok miktarı

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from api.views import StaffApi, StaffAuthToken, RegisterView, TeamViewSet, PartViewSet, AircraftViewSet,part_list,staff_list,aircraft_list
-from uav_rental_django import views  # HTML view'larını dahil et
+from uav_manufacturing_django import views  # HTML view'larını dahil et
 
 router = DefaultRouter()
 router.register(r'teams', TeamViewSet, basename='team')  # Team endpoint'i
