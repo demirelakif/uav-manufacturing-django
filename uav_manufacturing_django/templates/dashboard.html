@@ -55,6 +55,7 @@
                         <th class="px-4 py-2 text-left text-gray-700">Part Type</th>
                         <th class="px-4 py-2 text-left text-gray-700">Part Aircraft Type</th>
                         <th class="px-4 py-2 text-left text-gray-700">Stock</th>
+                        <th class="px-4 py-2 text-left text-gray-700">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -85,9 +86,12 @@
 
 
 </div>
+<meta name="csrf-token" content="{{ csrf_token }}">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
 <script>
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
     $(document).ready(function() {
         // DataTable for parts
         $('#parts-table').DataTable({
@@ -97,23 +101,35 @@
                 "url": "{% url 'part_list' %}",
                 "type": "GET",
                 "dataSrc": function (json) {
-                    console.log(json);  // API'den gelen yanıtı kontrol et
                     return json.data;
                 },
-                "error": function(xhr, status, error) {
-                    console.error("An error occurred: " + error);
-                }
             },
             "columns": [
                 { "data": "part_type" },
                 { "data": "part_aircraft" },
-                { "data": "stock" }
+                { "data": "stock" },
+                {
+                    "data": "id",
+                    "render": function (data, type, row) {
+                        const deleteUrl = "{% url 'part_delete' 0 %}".replace('0', data); // Django template ile URL oluşturma
+                        
+                        return `
+                            <form action="${deleteUrl}" method="POST" class="inline">
+                                <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+                                <input type="number" name="quantity" placeholder="Enter Quantity" class="w-16 border rounded px-2 py-1 text-sm mr-2" required>
+                                <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Recycle</button>
+                            </form>
+                        `;
+                    }
+                }
             ],
             "paging": false,
             "searching": false,
             "ordering": true,
             "info": false
         });
+        
+        
 
         // DataTable for aircrafts
         $('#aircrafts-table').DataTable({

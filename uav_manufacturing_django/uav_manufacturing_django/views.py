@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404,render, redirect
 from django.contrib.auth import authenticate, login
 from api.models import Part, Team, Staff
 from django.contrib.auth.decorators import login_required
@@ -44,7 +44,7 @@ def dashboard(request):
     # Oturum açmış kullanıcının takımına ait parçaları getir
     user_team = request.user.team
     parts = Part.objects.filter(team=user_team.id)
-    staff_list = Staff.objects.filter(team=user_team)  # Tüm personelleri listele
+    staff_list = Staff.objects.filter(team=user_team)  # Tüm personelleri listele user_team olan
     return render(request, "dashboard.html", {"parts": parts, "team": user_team,'staff_list': staff_list})
 
 
@@ -98,6 +98,24 @@ def aircraft_create_view(request):
 
     return render(request, 'aircraft_create.html')
     
+
+
+@login_required
+def part_delete_view(request, id):
+    if request.method == 'POST':
+        quantity = int(request.POST.get('quantity'))
+        print(id)
+        part = get_object_or_404(Part, id=id)
+
+        if part.stock >= quantity:
+            part.stock -= quantity
+            part.save()
+            messages.success(request, f"{quantity} units of {part.part_type} were deleted successfully.")
+        else:
+            messages.error(request, f"Not enough stock to delete {quantity} units.")
+
+    return redirect('dashboard')
+
 
 
 @login_required

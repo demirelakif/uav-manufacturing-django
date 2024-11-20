@@ -201,7 +201,8 @@ def part_list(request):
         data.append({
             'part_type': part.part_type,
             'part_aircraft': part.part_aircraft,
-            'stock': part.stock
+            'stock': part.stock,
+            'id': part.id,
         })
 
     return JsonResponse({
@@ -233,8 +234,6 @@ def aircraft_list(request):
 def staff_list(request):
     user_team = request.user.team
     staff = Staff.objects.filter(team=user_team)
-    print("e geldi bura")
-    print("team_iddddd",user_team.id)
     data = []
     for member in staff:
         data.append({
